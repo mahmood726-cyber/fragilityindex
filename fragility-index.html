@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fragility Index Calculator</title>
+<meta name="description" content="Compute the Fragility Index (FI) and Fragility Quotient (FQ) for RCTs with binary outcomes per Walsh et al. (2014).">
+<meta name="author" content="Mahmood Ahmad, Royal Free Hospital, London, UK">
+<style>
+/* ── CSS Custom Properties ── */
+:root {
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-accent-500: #6366f1;
+  --color-accent-600: #4f46e5;
+  --color-success-50: #f0fdf4;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-danger-50: #fef2f2;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-warning-50: #fffbeb;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-info-50: #eff6ff;
+  --color-info-500: #3b82f6;
+  --surface-bg: #ffffff;
+  --surface-raised: #f8fafc;
+  --surface-overlay: #f1f5f9;
+  --color-text: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+  --font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
+}
+
+[data-theme="dark"] {
+  --surface-bg: #0f172a;
+  --surface-raised: #1e293b;
+  --surface-overlay: #334155;
+  --color-text: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  --color-border: #334155;
+  --color-border-strong: #475569;
+  --color-primary-50: #1e293b;
+  --color-success-50: #1a2e1a;
+  --color-danger-50: #2e1a1a;
+  --color-warning-50: #2e2a1a;
+  --color-info-50: #1a1e2e;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.4);
+}
+
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--surface-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+a { color: var(--color-primary-500); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Header ── */
+.app-header {
+  background: linear-gradient(135deg, var(--color-primary-600), var(--color-accent-600));
+  color: #fff;
+  padding: var(--space-6) var(--space-8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+.app-header h1 { font-size: 1.5rem; font-weight: 700; }
+.app-header .subtitle { opacity: 0.9; font-size: 0.9rem; margin-top: var(--space-1); }
+.header-controls { display: flex; gap: var(--space-3); align-items: center; }
+.theme-toggle {
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+.theme-toggle:hover { background: rgba(255,255,255,0.3); }
+
+/* ── Tab Navigation ── */
+.tab-nav {
+  display: flex;
+  border-bottom: 2px solid var(--color-border);
+  background: var(--surface-raised);
+  padding: 0 var(--space-6);
+  overflow-x: auto;
+}
+.tab-btn {
+  padding: var(--space-3) var(--space-5);
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  transition: color 0.2s, border-color 0.2s;
+}
+.tab-btn:hover { color: var(--color-text); }
+.tab-btn[aria-selected="true"] {
+  color: var(--color-primary-600);
+  border-bottom-color: var(--color-primary-600);
+  font-weight: 600;
+}
+
+/* ── Tab Panels ── */
+.tab-panel { display: none; padding: var(--space-6) var(--space-8); max-width: 1100px; margin: 0 auto; }
+.tab-panel[aria-hidden="false"] { display: block; }
+
+/* ── Cards ── */
+.card {
+  background: var(--surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-bottom: var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+.card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: var(--space-4);
+  color: var(--color-text);
+}
+.card h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+  color: var(--color-text-secondary);
+}
+
+/* ── Form Elements ── */
+label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--color-text-secondary); margin-bottom: var(--space-1); }
+input[type="number"], input[type="text"], select {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-bg);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+input:focus, select:focus { outline: none; border-color: var(--color-primary-500); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+.input-group { margin-bottom: var(--space-4); }
+.grid-2x2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--color-primary-600); color: #fff; }
+.btn-primary:hover { background: var(--color-primary-700); }
+.btn-secondary { background: var(--surface-overlay); color: var(--color-text); border-color: var(--color-border); }
+.btn-secondary:hover { background: var(--color-border); }
+.btn-danger { background: var(--color-danger-500); color: #fff; }
+.btn-danger:hover { background: var(--color-danger-600); }
+.btn-sm { padding: var(--space-1) var(--space-3); font-size: 0.8rem; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-group { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-4); }
+
+/* ── 2x2 Table ── */
+.table-2x2 { width: 100%; border-collapse: collapse; margin: var(--space-4) 0; }
+.table-2x2 th, .table-2x2 td { padding: var(--space-3); text-align: center; border: 1px solid var(--color-border); }
+.table-2x2 th { background: var(--surface-overlay); font-weight: 600; font-size: 0.85rem; color: var(--color-text-secondary); }
+.table-2x2 td input { text-align: center; font-size: 1rem; font-weight: 600; width: 100px; }
+.table-2x2 .row-label { text-align: left; font-weight: 600; background: var(--surface-overlay); min-width: 100px; }
+
+/* ── Example Buttons ── */
+.example-list { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-3) 0; }
+.example-btn {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-primary-50);
+  border: 1px solid var(--color-primary-200);
+  border-radius: var(--radius-sm);
+  color: var(--color-primary-600);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.example-btn:hover { background: var(--color-primary-100); border-color: var(--color-primary-300); }
+
+/* ── Results ── */
+.result-hero {
+  text-align: center;
+  padding: var(--space-8) var(--space-6);
+  background: linear-gradient(135deg, var(--color-primary-50), var(--surface-raised));
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  margin-bottom: var(--space-5);
+}
+.result-hero .fi-value { font-size: 3.5rem; font-weight: 800; color: var(--color-primary-600); line-height: 1; }
+.result-hero .fi-label { font-size: 0.95rem; color: var(--color-text-secondary); margin-top: var(--space-2); }
+.result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-5); }
+.result-stat {
+  background: var(--surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  text-align: center;
+}
+.result-stat .stat-value { font-size: 1.8rem; font-weight: 700; color: var(--color-accent-500); }
+.result-stat .stat-label { font-size: 0.8rem; color: var(--color-text-secondary); margin-top: var(--space-1); }
+.interpretation {
+  padding: var(--space-4);
+  background: var(--color-info-50);
+  border-left: 4px solid var(--color-info-500);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  margin-bottom: var(--space-5);
+}
+
+/* ── Icon Array ── */
+.icon-array-container { margin: var(--space-5) 0; }
+.icon-array-legend { display: flex; gap: var(--space-5); justify-content: center; margin-bottom: var(--space-3); font-size: 0.85rem; }
+.legend-item { display: flex; align-items: center; gap: var(--space-2); }
+.legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+/* ── Sensitivity Table ── */
+.sens-table { width: 100%; border-collapse: collapse; margin: var(--space-4) 0; font-size: 0.9rem; }
+.sens-table th, .sens-table td { padding: var(--space-3); border: 1px solid var(--color-border); text-align: center; }
+.sens-table th { background: var(--surface-overlay); font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; }
+.sens-table tr:hover { background: var(--color-primary-50); }
+
+/* ── Bar Chart ── */
+.bar-chart { margin: var(--space-5) 0; }
+.bar-row { display: flex; align-items: center; margin-bottom: var(--space-2); }
+.bar-label { width: 180px; font-size: 0.82rem; text-align: right; padding-right: var(--space-3); color: var(--color-text-secondary); }
+.bar-track { flex: 1; height: 28px; background: var(--surface-overlay); border-radius: var(--radius-sm); overflow: hidden; position: relative; }
+.bar-fill { height: 100%; background: var(--color-primary-500); border-radius: var(--radius-sm); transition: width 0.5s ease; display: flex; align-items: center; justify-content: flex-end; padding-right: var(--space-2); }
+.bar-fill span { color: #fff; font-size: 0.75rem; font-weight: 600; }
+
+/* ── Code Block ── */
+.code-block {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  position: relative;
+}
+.code-block .copy-btn {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border: none;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+.code-block .copy-btn:hover { background: rgba(255,255,255,0.25); }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .tab-panel { padding: var(--space-4); }
+  .app-header { padding: var(--space-4); }
+  .grid-2x2 { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr; }
+  .result-hero .fi-value { font-size: 2.5rem; }
+  .bar-label { width: 120px; font-size: 0.75rem; }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--surface-bg); }
+::-webkit-scrollbar-thumb { background: var(--color-border-strong); border-radius: 4px; }
+scrollbar-color: var(--color-border-strong) var(--surface-bg);
+
+/* ── Toast ── */
+.toast-container { position: fixed; top: var(--space-4); right: var(--space-4); z-index: 9999; display: flex; flex-direction: column; gap: var(--space-2); }
+.toast {
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.85rem;
+  animation: toastIn 0.3s ease;
+}
+.toast.success { border-left: 4px solid var(--color-success-500); }
+.toast.error { border-left: 4px solid var(--color-danger-500); }
+.toast.info { border-left: 4px solid var(--color-info-500); }
+@keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+
+/* ── Footer ── */
+.app-footer {
+  text-align: center;
+  padding: var(--space-5) var(--space-6);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  margin-top: var(--space-8);
+}
+.app-footer a { color: var(--color-primary-500); }
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--color-text-muted);
+}
+.empty-state svg { margin-bottom: var(--space-4); }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ HEADER ══════════════════ -->
+<header class="app-header">
+  <div>
+    <h1>Fragility Index Calculator</h1>
+    <div class="subtitle">Compute FI &amp; FQ for RCTs with binary outcomes (Walsh et al., 2014)</div>
+  </div>
+  <div class="header-controls">
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">Dark Mode</button>
+  </div>
+</header>
+
+<!-- ══════════════════ TAB NAV ══════════════════ -->
+<nav class="tab-nav" role="tablist" aria-label="Main navigation">
+  <button class="tab-btn" role="tab" id="tab-input" aria-controls="panel-input" aria-selected="true" tabindex="0">Data Input</button>
+  <button class="tab-btn" role="tab" id="tab-results" aria-controls="panel-results" aria-selected="false" tabindex="-1">Results</button>
+  <button class="tab-btn" role="tab" id="tab-sensitivity" aria-controls="panel-sensitivity" aria-selected="false" tabindex="-1">Sensitivity</button>
+  <button class="tab-btn" role="tab" id="tab-report" aria-controls="panel-report" aria-selected="false" tabindex="-1">Report</button>
+</nav>
+
+<!-- ══════════════════ PANEL 1: DATA INPUT ══════════════════ -->
+<div class="tab-panel" role="tabpanel" id="panel-input" aria-labelledby="tab-input" aria-hidden="false">
+  <div class="card">
+    <h3>2 x 2 Contingency Table</h3>
+    <p style="font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:var(--space-4);">
+      Enter the number of events and non-events for each arm of the trial.
+    </p>
+    <table class="table-2x2" id="twoByTwo">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Events</th>
+          <th>No Events</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label">Treatment</td>
+          <td><input type="number" id="inp-a" min="0" step="1" aria-label="Treatment events" value=""></td>
+          <td><input type="number" id="inp-b" min="0" step="1" aria-label="Treatment non-events" value=""></td>
+          <td id="total-trt" style="font-weight:600;color:var(--color-text-secondary);">--</td>
+        </tr>
+        <tr>
+          <td class="row-label">Control</td>
+          <td><input type="number" id="inp-c" min="0" step="1" aria-label="Control events" value=""></td>
+          <td><input type="number" id="inp-d" min="0" step="1" aria-label="Control non-events" value=""></td>
+          <td id="total-ctrl" style="font-weight:600;color:var(--color-text-secondary);">--</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" id="btnCompute" onclick="FI.compute()">Compute Fragility Index</button>
+      <button class="btn btn-secondary" id="btnClear" onclick="FI.clearInputs()">Clear</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Built-in Examples</h3>
+    <p style="font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:var(--space-3);">
+      Load data from landmark RCTs to explore the Fragility Index.
+    </p>
+    <div class="example-list">
+      <button class="example-btn" onclick="FI.loadExample('crash2')">CRASH-2 (TXA for trauma)</button>
+      <button class="example-btn" onclick="FI.loadExample('sprint')">SPRINT (Intensive BP)</button>
+      <button class="example-btn" onclick="FI.loadExample('ischemia')">ISCHEMIA (Revascularization)</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Compute from Effect Estimate</h3>
+    <p style="font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:var(--space-3);">
+      If you have a risk ratio or odds ratio with CI and total N, auto-fill the 2x2 table.
+    </p>
+    <div class="grid-2x2">
+      <div class="input-group">
+        <label for="inp-measure">Measure</label>
+        <select id="inp-measure">
+          <option value="rr">Risk Ratio (RR)</option>
+          <option value="or">Odds Ratio (OR)</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label for="inp-estimate">Point Estimate</label>
+        <input type="number" id="inp-estimate" step="any" placeholder="e.g. 0.85">
+      </div>
+      <div class="input-group">
+        <label for="inp-n-trt">N (Treatment arm)</label>
+        <input type="number" id="inp-n-trt" min="1" step="1" placeholder="e.g. 5000">
+      </div>
+      <div class="input-group">
+        <label for="inp-n-ctrl">N (Control arm)</label>
+        <input type="number" id="inp-n-ctrl" min="1" step="1" placeholder="e.g. 5000">
+      </div>
+      <div class="input-group">
+        <label for="inp-ctrl-event-rate">Control Event Rate</label>
+        <input type="number" id="inp-ctrl-event-rate" step="any" min="0" max="1" placeholder="e.g. 0.12">
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-secondary" onclick="FI.fillFromEffect()">Auto-fill 2x2 Table</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ PANEL 2: RESULTS ══════════════════ -->
+<div class="tab-panel" role="tabpanel" id="panel-results" aria-labelledby="tab-results" aria-hidden="true">
+  <div id="results-empty" class="empty-state">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+    </svg>
+    <p>No results yet. Enter data in the <strong>Data Input</strong> tab and click <strong>Compute</strong>.</p>
+  </div>
+  <div id="results-content" style="display:none;">
+    <div class="result-hero" id="resultHero">
+      <div class="fi-value" id="fiValueDisplay">--</div>
+      <div class="fi-label" id="fiLabelDisplay">Fragility Index</div>
+    </div>
+    <div class="result-grid" id="resultGrid"></div>
+    <div class="interpretation" id="interpretationText"></div>
+    <div class="card">
+      <h3>Icon Array</h3>
+      <p style="font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:var(--space-3);">
+        Each dot represents one patient. Highlighted dots show the minimum number whose outcome change would flip significance.
+      </p>
+      <div class="icon-array-legend">
+        <div class="legend-item"><span class="legend-dot" style="background:#94a3b8;"></span> Unchanged patients</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--color-danger-500);"></span> FI patients (outcome flipped)</div>
+      </div>
+      <div class="icon-array-container" id="iconArrayContainer"></div>
+    </div>
+    <div class="card" id="iterationCard" style="display:none;">
+      <h3>Iteration Details</h3>
+      <p style="font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:var(--space-3);">
+        Step-by-step changes until significance is lost (or gained).
+      </p>
+      <div id="iterationDetails" style="max-height:300px;overflow-y:auto;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ PANEL 3: SENSITIVITY ══════════════════ -->
+<div class="tab-panel" role="tabpanel" id="panel-sensitivity" aria-labelledby="tab-sensitivity" aria-hidden="true">
+  <div id="sens-empty" class="empty-state">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+    </svg>
+    <p>Run a computation first to see sensitivity analyses.</p>
+  </div>
+  <div id="sens-content" style="display:none;">
+    <div class="card">
+      <h3>FI Across Alpha Thresholds</h3>
+      <p style="font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:var(--space-3);">
+        How the Fragility Index changes at different significance levels.
+      </p>
+      <div id="sensAlphaTable"></div>
+      <div id="sensAlphaChart" class="bar-chart"></div>
+    </div>
+    <div class="card">
+      <h3>FI by Arm Modified</h3>
+      <p style="font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:var(--space-3);">
+        Compare FI when modifying only treatment, only control, or either arm.
+      </p>
+      <div id="sensArmTable"></div>
+      <div id="sensArmChart" class="bar-chart"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ PANEL 4: REPORT ══════════════════ -->
+<div class="tab-panel" role="tabpanel" id="panel-report" aria-labelledby="tab-report" aria-hidden="true">
+  <div id="report-empty" class="empty-state">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+    </svg>
+    <p>Run a computation first to generate a report.</p>
+  </div>
+  <div id="report-content" style="display:none;">
+    <div class="card">
+      <h3>Methods Text</h3>
+      <div id="methodsText" style="font-size:0.9rem;line-height:1.7;"></div>
+    </div>
+    <div class="card">
+      <h3>R Code Equivalent</h3>
+      <div class="code-block" id="rCodeBlock">
+        <button class="copy-btn" onclick="FI.copyCode('rCodeContent')">Copy</button>
+        <code id="rCodeContent"></code>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Export</h3>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="FI.exportCSV()">Export CSV</button>
+        <button class="btn btn-secondary" onclick="FI.exportJSON()">Export JSON</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ FOOTER ══════════════════ -->
+<footer class="app-footer">
+  <p>Fragility Index Calculator v1.0 | Mahmood Ahmad, Royal Free Hospital, London, UK |
+    <a href="https://orcid.org/0009-0003-7781-4478" target="_blank" rel="noopener">ORCID 0009-0003-7781-4478</a>
+  </p>
+  <p style="margin-top:var(--space-1);">Reference: Walsh M, et al. <em>J Clin Epidemiol</em>. 2014;67(6):622-628.</p>
+</footer>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   Fragility Index Calculator — IIFE
+   ═══════════════════════════════════════════════════════════ */
+const FI = (function() {
+  'use strict';
+
+  // ── Constants ──
+  const STORAGE_KEY = 'fragilityindex-data';
+  const ALPHAS = [0.01, 0.025, 0.05, 0.10];
+  const ARM_MODES = ['fewer', 'treatment', 'control'];
+  const ARM_LABELS = { fewer: 'Arm with fewer events (default)', treatment: 'Treatment arm only', control: 'Control arm only' };
+
+  const EXAMPLES = {
+    crash2: { name: 'CRASH-2', desc: 'TXA for trauma bleeding', a: 489, b: 4484, c: 574, d: 4378 },
+    sprint: { name: 'SPRINT', desc: 'Intensive BP control', a: 155, b: 4223, c: 210, d: 4193 },
+    ischemia: { name: 'ISCHEMIA', desc: 'Revascularization vs medical therapy', a: 318, b: 2270, c: 352, d: 2239 }
+  };
+
+  let lastResult = null;
+
+  // ── Utility: escapeHtml ──
+  function escapeHtml(str) {
+    const el = document.createElement('span');
+    el.textContent = String(str);
+    return el.innerHTML;
+  }
+
+  // ── Utility: csvSafe ──
+  function csvSafe(val) {
+    const s = String(val);
+    if (s.startsWith('=') || s.startsWith('+') || s.startsWith('@') || s.startsWith('\t') || s.startsWith('\r')) {
+      return "'" + s;
+    }
+    if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  }
+
+  // ── Utility: toast ──
+  function toast(msg, type) {
+    type = type || 'info';
+    const container = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.textContent = msg;
+    container.appendChild(el);
+    setTimeout(function() { el.remove(); }, 3500);
+  }
+
+  // ── Utility: format number ──
+  function fmt(n, d) {
+    if (n === null || n === undefined || isNaN(n)) return '--';
+    d = (d !== undefined) ? d : 4;
+    return Number(n).toFixed(d);
+  }
+
+  // ═══════════════════════════════════════════════════
+  // Fisher's Exact Test (two-sided)
+  // Uses hypergeometric distribution
+  // ═══════════════════════════════════════════════════
+
+  // Log-factorial with caching
+  const _logfCache = [0, 0];
+  function logFact(n) {
+    if (n < 0) return 0;
+    if (n < _logfCache.length) return _logfCache[n];
+    let val = _logfCache[_logfCache.length - 1];
+    for (let i = _logfCache.length; i <= n; i++) {
+      val += Math.log(i);
+      _logfCache.push(val);
+    }
+    return val;
+  }
+
+  // Hypergeometric probability: P(X=k | N, K, n)
+  // N=total, K=total successes, n=sample size (row1 total)
+  function hypergeomPMF(k, N, K, n) {
+    // C(K,k) * C(N-K, n-k) / C(N,n)
+    const logP = logFact(K) - logFact(k) - logFact(K - k)
+               + logFact(N - K) - logFact(n - k) - logFact(N - K - n + k)
+               - logFact(N) + logFact(n) + logFact(N - n);
+    return Math.exp(logP);
+  }
+
+  // Fisher's exact test, two-sided p-value
+  // 2x2 table: [[a, b], [c, d]]
+  function fisherExact(a, b, c, d) {
+    const n1 = a + b;  // row 1 total (treatment)
+    const n2 = c + d;  // row 2 total (control)
+    const N = n1 + n2;  // grand total
+    const K = a + c;    // column 1 total (events)
+    const n = n1;       // sample size = row 1 total
+
+    // Probability of observed table
+    const pObs = hypergeomPMF(a, N, K, n);
+
+    // Sum probabilities of all tables as or more extreme (two-sided)
+    const kMin = Math.max(0, K - n2);
+    const kMax = Math.min(K, n);
+    let pVal = 0;
+    for (let k = kMin; k <= kMax; k++) {
+      const pk = hypergeomPMF(k, N, K, n);
+      if (pk <= pObs + 1e-12) {  // tolerance for floating point
+        pVal += pk;
+      }
+    }
+    return Math.min(pVal, 1.0);
+  }
+
+  // ═══════════════════════════════════════════════════
+  // Core Algorithm: Fragility Index
+  // ═══════════════════════════════════════════════════
+
+  /**
+   * Compute fragility index.
+   * @param {number} a - treatment events
+   * @param {number} b - treatment non-events
+   * @param {number} c - control events
+   * @param {number} d - control non-events
+   * @param {number} alpha - significance threshold (default 0.05)
+   * @param {string} armMode - 'fewer' | 'treatment' | 'control'
+   * @returns {object} { fi, fq, pOriginal, pFinal, significant, steps, reverse }
+   */
+  function computeFI(a, b, c, d, alpha, armMode) {
+    alpha = alpha || 0.05;
+    armMode = armMode || 'fewer';
+
+    const totalN = a + b + c + d;
+    const pOriginal = fisherExact(a, b, c, d);
+    const isSignificant = pOriginal < alpha;
+
+    let aa = a, bb = b, cc = c, dd = d;
+    let fi = 0;
+    const steps = [];
+
+    if (isSignificant) {
+      // Forward FI: add events to arm with fewer events until p >= alpha
+      while (fisherExact(aa, bb, cc, dd) < alpha) {
+        let modArm;
+        if (armMode === 'treatment') {
+          modArm = 'treatment';
+        } else if (armMode === 'control') {
+          modArm = 'control';
+        } else {
+          // 'fewer': modify the arm with fewer events
+          modArm = (aa <= cc) ? 'treatment' : 'control';
+        }
+
+        if (modArm === 'treatment') {
+          aa++; bb--;
+          if (bb < 0) break;
+        } else {
+          cc++; dd--;
+          if (dd < 0) break;
+        }
+        fi++;
+        const pStep = fisherExact(aa, bb, cc, dd);
+        steps.push({ step: fi, arm: modArm, a: aa, b: bb, c: cc, d: dd, p: pStep });
+      }
+
+      const pFinal = fisherExact(aa, bb, cc, dd);
+      const fq = totalN > 0 ? fi / totalN : 0;
+
+      return {
+        fi: fi,
+        fq: fq,
+        pOriginal: pOriginal,
+        pFinal: pFinal,
+        significant: true,
+        reverse: false,
+        steps: steps,
+        totalN: totalN,
+        alpha: alpha,
+        armMode: armMode,
+        input: { a: a, b: b, c: c, d: d }
+      };
+    } else {
+      // Reverse FI: trial is NOT significant. How many events to ADD to make it significant?
+      // We try adding events to make a difference (increase events in one arm)
+      let bestFI = Infinity;
+      let bestSteps = [];
+      let bestPFinal = pOriginal;
+      let bestDirection = 'treatment';
+
+      // Try adding events to treatment (make treatment worse)
+      for (let dir of ['treatment', 'control']) {
+        let ta = a, tb = b, tc = c, td = d;
+        let rfi = 0;
+        const rSteps = [];
+
+        while (fisherExact(ta, tb, tc, td) >= alpha) {
+          if (dir === 'treatment') {
+            ta++; tb--;
+            if (tb < 0) break;
+          } else {
+            tc++; td--;
+            if (td < 0) break;
+          }
+          rfi++;
+          const pS = fisherExact(ta, tb, tc, td);
+          rSteps.push({ step: rfi, arm: dir, a: ta, b: tb, c: tc, d: td, p: pS });
+          if (pS < alpha) break;
+        }
+
+        const rpFinal = fisherExact(ta, tb, tc, td);
+        if (rpFinal < alpha && rfi < bestFI) {
+          bestFI = rfi;
+          bestSteps = rSteps;
+          bestPFinal = rpFinal;
+          bestDirection = dir;
+        }
+      }
+
+      if (bestFI === Infinity) bestFI = null;
+
+      return {
+        fi: bestFI,
+        fq: (bestFI !== null && totalN > 0) ? bestFI / totalN : null,
+        pOriginal: pOriginal,
+        pFinal: bestPFinal,
+        significant: false,
+        reverse: true,
+        steps: bestSteps,
+        totalN: totalN,
+        alpha: alpha,
+        armMode: armMode,
+        reverseDirection: bestDirection,
+        input: { a: a, b: b, c: c, d: d }
+      };
+    }
+  }
+
+  // ═══════════════════════════════════════════════════
+  // Tab Management
+  // ═══════════════════════════════════════════════════
+  function initTabs() {
+    const tabs = document.querySelectorAll('.tab-btn');
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() { switchTab(tab.id); });
+      tab.addEventListener('keydown', function(e) {
+        const tabArr = Array.from(tabs);
+        const idx = tabArr.indexOf(tab);
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          const next = tabArr[(idx + 1) % tabArr.length];
+          switchTab(next.id);
+          next.focus();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          const prev = tabArr[(idx - 1 + tabArr.length) % tabArr.length];
+          switchTab(prev.id);
+          prev.focus();
+        }
+      });
+    });
+  }
+
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(function(t) {
+      t.setAttribute('aria-selected', 'false');
+      t.setAttribute('tabindex', '-1');
+    });
+    document.querySelectorAll('.tab-panel').forEach(function(p) {
+      p.setAttribute('aria-hidden', 'true');
+    });
+    const btn = document.getElementById(tabId);
+    btn.setAttribute('aria-selected', 'true');
+    btn.setAttribute('tabindex', '0');
+    const panelId = btn.getAttribute('aria-controls');
+    document.getElementById(panelId).setAttribute('aria-hidden', 'false');
+  }
+
+  // ═══════════════════════════════════════════════════
+  // Input Handling
+  // ═══════════════════════════════════════════════════
+  function getInputs() {
+    const a = parseInt(document.getElementById('inp-a').value);
+    const b = parseInt(document.getElementById('inp-b').value);
+    const c = parseInt(document.getElementById('inp-c').value);
+    const d = parseInt(document.getElementById('inp-d').value);
+    return { a: a, b: b, c: c, d: d };
+  }
+
+  function setInputs(a, b, c, d) {
+    document.getElementById('inp-a').value = a;
+    document.getElementById('inp-b').value = b;
+    document.getElementById('inp-c').value = c;
+    document.getElementById('inp-d').value = d;
+    updateTotals();
+  }
+
+  function updateTotals() {
+    const v = getInputs();
+    const trt = (!isNaN(v.a) && !isNaN(v.b)) ? (v.a + v.b) : '--';
+    const ctrl = (!isNaN(v.c) && !isNaN(v.d)) ? (v.c + v.d) : '--';
+    document.getElementById('total-trt').textContent = trt;
+    document.getElementById('total-ctrl').textContent = ctrl;
+  }
+
+  function clearInputs() {
+    document.getElementById('inp-a').value = '';
+    document.getElementById('inp-b').value = '';
+    document.getElementById('inp-c').value = '';
+    document.getElementById('inp-d').value = '';
+    updateTotals();
+    lastResult = null;
+    document.getElementById('results-content').style.display = 'none';
+    document.getElementById('results-empty').style.display = 'block';
+    document.getElementById('sens-content').style.display = 'none';
+    document.getElementById('sens-empty').style.display = 'block';
+    document.getElementById('report-content').style.display = 'none';
+    document.getElementById('report-empty').style.display = 'block';
+    toast('Inputs cleared', 'info');
+  }
+
+  function loadExample(key) {
+    const ex = EXAMPLES[key];
+    if (!ex) return;
+    setInputs(ex.a, ex.b, ex.c, ex.d);
+    toast('Loaded: ' + ex.name + ' (' + ex.desc + ')', 'success');
+  }
+
+  function fillFromEffect() {
+    const measure = document.getElementById('inp-measure').value;
+    const est = parseFloat(document.getElementById('inp-estimate').value);
+    const nTrt = parseInt(document.getElementById('inp-n-trt').value);
+    const nCtrl = parseInt(document.getElementById('inp-n-ctrl').value);
+    const cer = parseFloat(document.getElementById('inp-ctrl-event-rate').value);
+
+    if (isNaN(est) || isNaN(nTrt) || isNaN(nCtrl) || isNaN(cer)) {
+      toast('Please fill all fields for effect-based computation.', 'error');
+      return;
+    }
+    if (cer <= 0 || cer >= 1) {
+      toast('Control event rate must be between 0 and 1.', 'error');
+      return;
+    }
+
+    let trtEventRate;
+    if (measure === 'rr') {
+      trtEventRate = est * cer;
+    } else {
+      // OR: p_trt = (OR * cer / (1 - cer)) / (1 + OR * cer / (1 - cer))
+      const odds_ctrl = cer / (1 - cer);
+      const odds_trt = est * odds_ctrl;
+      trtEventRate = odds_trt / (1 + odds_trt);
+    }
+
+    if (trtEventRate <= 0 || trtEventRate >= 1) {
+      toast('Computed treatment event rate is out of range. Check inputs.', 'error');
+      return;
+    }
+
+    const c = Math.round(cer * nCtrl);
+    const d = nCtrl - c;
+    const a = Math.round(trtEventRate * nTrt);
+    const b = nTrt - a;
+
+    setInputs(a, b, c, d);
+    toast('2x2 table auto-filled from ' + measure.toUpperCase() + ' = ' + fmt(est, 2), 'success');
+  }
+
+  // ═══════════════════════════════════════════════════
+  // Main Computation
+  // ═══════════════════════════════════════════════════
+  function compute() {
+    const v = getInputs();
+    if (isNaN(v.a) || isNaN(v.b) || isNaN(v.c) || isNaN(v.d)) {
+      toast('Please enter all four cell values.', 'error');
+      return;
+    }
+    if (v.a < 0 || v.b < 0 || v.c < 0 || v.d < 0) {
+      toast('Cell values must be non-negative.', 'error');
+      return;
+    }
+    if ((v.a + v.b) === 0 || (v.c + v.d) === 0) {
+      toast('Each arm must have at least one patient.', 'error');
+      return;
+    }
+
+    lastResult = computeFI(v.a, v.b, v.c, v.d, 0.05, 'fewer');
+    saveToStorage(lastResult);
+    renderResults(lastResult);
+    renderSensitivity(v.a, v.b, v.c, v.d);
+    renderReport(lastResult, v.a, v.b, v.c, v.d);
+    switchTab('tab-results');
+    toast('Fragility Index computed successfully!', 'success');
+  }
+
+  // ═══════════════════════════════════════════════════
+  // Render Results
+  // ═══════════════════════════════════════════════════
+  function renderResults(res) {
+    document.getElementById('results-empty').style.display = 'none';
+    document.getElementById('results-content').style.display = 'block';
+
+    // Hero
+    const heroEl = document.getElementById('fiValueDisplay');
+    const labelEl = document.getElementById('fiLabelDisplay');
+    if (res.reverse) {
+      heroEl.textContent = (res.fi !== null) ? res.fi : 'N/A';
+      labelEl.textContent = 'Reverse Fragility Index (trial is not significant)';
+    } else {
+      heroEl.textContent = res.fi;
+      labelEl.textContent = 'Fragility Index';
+    }
+
+    // Stats grid
+    const grid = document.getElementById('resultGrid');
+    const stats = [
+      { label: 'Fisher p (original)', value: fmt(res.pOriginal) },
+      { label: 'Fisher p (after modification)', value: fmt(res.pFinal) },
+      { label: 'Fragility Quotient (FQ)', value: (res.fq !== null) ? (fmt(res.fq, 4) + ' (' + fmt(res.fq * 100, 2) + '%)') : 'N/A' },
+      { label: 'Total N', value: res.totalN },
+      { label: 'Alpha', value: res.alpha },
+      { label: 'Originally significant?', value: res.significant ? 'Yes' : 'No' }
+    ];
+    grid.innerHTML = stats.map(function(s) {
+      return '<div class="result-stat"><div class="stat-value">' + escapeHtml(String(s.value)) + '</div><div class="stat-label">' + escapeHtml(s.label) + '</div></div>';
+    }).join('');
+
+    // Interpretation
+    const interp = document.getElementById('interpretationText');
+    if (res.reverse) {
+      if (res.fi !== null) {
+        interp.innerHTML = '<strong>This trial did not reach statistical significance</strong> (Fisher exact p = ' + escapeHtml(fmt(res.pOriginal)) + '). ' +
+          'The <strong>Reverse Fragility Index</strong> is <strong>' + escapeHtml(String(res.fi)) + '</strong>: ' +
+          'adding ' + escapeHtml(String(res.fi)) + ' event(s) to the ' + escapeHtml(res.reverseDirection) + ' arm would make the result statistically significant at alpha = ' + escapeHtml(String(res.alpha)) + '. ' +
+          'The Reverse Fragility Quotient (FQ) is ' + escapeHtml(fmt(res.fq * 100, 2)) + '%.';
+      } else {
+        interp.innerHTML = '<strong>This trial did not reach statistical significance</strong> (Fisher exact p = ' + escapeHtml(fmt(res.pOriginal)) + '). ' +
+          'No feasible number of event changes could make it significant within the available sample size.';
+      }
+    } else {
+      interp.innerHTML = '<strong>The significance of this trial could be reversed by changing the outcome of just ' +
+        escapeHtml(String(res.fi)) + ' patient' + (res.fi === 1 ? '' : 's') + ' out of ' + escapeHtml(String(res.totalN)) +
+        '</strong> (FQ = ' + escapeHtml(fmt(res.fq * 100, 2)) + '%). ' +
+        'The original Fisher exact p-value was ' + escapeHtml(fmt(res.pOriginal)) + '; after ' + escapeHtml(String(res.fi)) +
+        ' modification' + (res.fi === 1 ? '' : 's') + ', p = ' + escapeHtml(fmt(res.pFinal)) + '.';
+      if (res.fi <= 3) {
+        interp.innerHTML += ' <strong style="color:var(--color-danger-500);">This is a very fragile result.</strong>';
+      } else if (res.fi <= 10) {
+        interp.innerHTML += ' <strong style="color:var(--color-warning-500);">This result has moderate fragility.</strong>';
+      } else {
+        interp.innerHTML += ' <strong style="color:var(--color-success-500);">This result is relatively robust.</strong>';
+      }
+    }
+
+    // Icon array
+    renderIconArray(res);
+
+    // Iteration details
+    renderIterations(res);
+  }
+
+  // ═══════════════════════════════════════════════════
+  // Icon Array (SVG)
+  // ═══════════════════════════════════════════════════
+  function renderIconArray(res) {
+    const container = document.getElementById('iconArrayContainer');
+    const totalN = res.totalN;
+    const fi = (res.fi !== null) ? res.fi : 0;
+
+    // For large N, sample down
+    const MAX_DOTS = 500;
+    let dotsTotal, dotsFI;
+    if (totalN <= MAX_DOTS) {
+      dotsTotal = totalN;
+      dotsFI = fi;
+    } else {
+      const ratio = MAX_DOTS / totalN;
+      dotsTotal = MAX_DOTS;
+      dotsFI = Math.max(1, Math.round(fi * ratio));
+      if (fi === 0) dotsFI = 0;
+    }
+
+    const cols = Math.ceil(Math.sqrt(dotsTotal * 1.5));
+    const rows = Math.ceil(dotsTotal / cols);
+    const dotR = 4;
+    const gap = 12;
+    const svgW = cols * gap + gap;
+    const svgH = rows * gap + gap;
+
+    let svg = '<svg width="100%" viewBox="0 0 ' + svgW + ' ' + svgH + '" style="max-height:400px;">';
+
+    for (let i = 0; i < dotsTotal; i++) {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const cx = gap + col * gap;
+      const cy = gap + row * gap;
+      const isFI = i < dotsFI;
+      const color = isFI ? 'var(--color-danger-500)' : '#94a3b8';
+      const opacity = isFI ? '1' : '0.4';
+      svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + dotR + '" fill="' + color + '" opacity="' + opacity + '"/>';
+    }
+    svg += '</svg>';
+
+    if (totalN > MAX_DOTS) {
+      svg += '<p style="font-size:0.8rem;color:var(--color-text-muted);text-align:center;margin-top:var(--space-2);">' +
+        'Showing ' + escapeHtml(String(dotsTotal)) + ' dots (scaled from N=' + escapeHtml(String(totalN)) + '). ' +
+        escapeHtml(String(dotsFI)) + ' highlighted = FI scaled equivalent.</p>';
+    }
+
+    container.innerHTML = svg;
+  }
+
+  // ═══════════════════════════════════════════════════
+  // Iteration Details
+  // ═══════════════════════════════════════════════════
+  function renderIterations(res) {
+    const card = document.getElementById('iterationCard');
+    const container = document.getElementById('iterationDetails');
+    if (!res.steps || res.steps.length === 0) {
+      card.style.display = 'none';
+      return;
+    }
+    card.style.display = 'block';
+    let html = '<table class="sens-table"><thead><tr><th>Step</th><th>Arm Modified</th><th>Trt Events</th><th>Trt No-Ev</th><th>Ctrl Events</th><th>Ctrl No-Ev</th><th>Fisher p</th></tr></thead><tbody>';
+    // Add original row
+    html += '<tr><td>0 (original)</td><td>--</td><td>' + escapeHtml(String(res.input.a)) + '</td><td>' + escapeHtml(String(res.input.b)) + '</td><td>' + escapeHtml(String(res.input.c)) + '</td><td>' + escapeHtml(String(res.input.d)) + '</td><td>' + escapeHtml(fmt(res.pOriginal)) + '</td></tr>';
+    res.steps.forEach(function(s) {
+      html += '<tr><td>' + escapeHtml(String(s.step)) + '</td><td>' + escapeHtml(s.arm) + '</td><td>' + escapeHtml(String(s.a)) + '</td><td>' + escapeHtml(String(s.b)) + '</td><td>' + escapeHtml(String(s.c)) + '</td><td>' + escapeHtml(String(s.d)) + '</td><td>' + escapeHtml(fmt(s.p)) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+  // ═══════════════════════════════════════════════════
+  // Sensitivity Analysis
+  // ═══════════════════════════════════════════════════
+  function renderSensitivity(a, b, c, d) {
+    document.getElementById('sens-empty').style.display = 'none';
+    document.getElementById('sens-content').style.display = 'block';
+
+    // Alpha sensitivity
+    const alphaResults = ALPHAS.map(function(alpha) {
+      var r = computeFI(a, b, c, d, alpha, 'fewer');
+      return { alpha: alpha, fi: r.fi, fq: r.fq, p: r.pOriginal, reverse: r.reverse };
+    });
+
+    let alphaHtml = '<table class="sens-table"><thead><tr><th>Alpha</th><th>FI</th><th>FQ</th><th>Type</th></tr></thead><tbody>';
+    alphaResults.forEach(function(r) {
+      alphaHtml += '<tr><td>' + escapeHtml(String(r.alpha)) + '</td><td>' + escapeHtml(r.fi !== null ? String(r.fi) : 'N/A') + '</td><td>' + escapeHtml(r.fq !== null ? fmt(r.fq, 4) : 'N/A') + '</td><td>' + escapeHtml(r.reverse ? 'Reverse' : 'Forward') + '</td></tr>';
+    });
+    alphaHtml += '</tbody></table>';
+    document.getElementById('sensAlphaTable').innerHTML = alphaHtml;
+
+    // Alpha bar chart
+    const maxFI = Math.max.apply(null, alphaResults.map(function(r) { return r.fi || 0; }));
+    let alphaChartHtml = '';
+    alphaResults.forEach(function(r) {
+      const pct = (maxFI > 0 && r.fi !== null) ? (r.fi / maxFI * 100) : 0;
+      alphaChartHtml += '<div class="bar-row">' +
+        '<div class="bar-label">alpha = ' + escapeHtml(String(r.alpha)) + (r.reverse ? ' (rev)' : '') + '</div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + (r.reverse ? 'var(--color-warning-500)' : 'var(--color-primary-500)') + '"><span>' + escapeHtml(r.fi !== null ? String(r.fi) : 'N/A') + '</span></div></div></div>';
+    });
+    document.getElementById('sensAlphaChart').innerHTML = alphaChartHtml;
+
+    // Arm sensitivity
+    const armResults = ARM_MODES.map(function(mode) {
+      var r = computeFI(a, b, c, d, 0.05, mode);
+      return { mode: mode, label: ARM_LABELS[mode], fi: r.fi, fq: r.fq, reverse: r.reverse };
+    });
+
+    let armHtml = '<table class="sens-table"><thead><tr><th>Arm Modified</th><th>FI</th><th>FQ</th><th>Type</th></tr></thead><tbody>';
+    armResults.forEach(function(r) {
+      armHtml += '<tr><td>' + escapeHtml(r.label) + '</td><td>' + escapeHtml(r.fi !== null ? String(r.fi) : 'N/A') + '</td><td>' + escapeHtml(r.fq !== null ? fmt(r.fq, 4) : 'N/A') + '</td><td>' + escapeHtml(r.reverse ? 'Reverse' : 'Forward') + '</td></tr>';
+    });
+    armHtml += '</tbody></table>';
+    document.getElementById('sensArmTable').innerHTML = armHtml;
+
+    // Arm bar chart
+    const maxArmFI = Math.max.apply(null, armResults.map(function(r) { return r.fi || 0; }));
+    let armChartHtml = '';
+    armResults.forEach(function(r) {
+      const pct = (maxArmFI > 0 && r.fi !== null) ? (r.fi / maxArmFI * 100) : 0;
+      armChartHtml += '<div class="bar-row">' +
+        '<div class="bar-label">' + escapeHtml(r.label) + '</div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;"><span>' + escapeHtml(r.fi !== null ? String(r.fi) : 'N/A') + '</span></div></div></div>';
+    });
+    document.getElementById('sensArmChart').innerHTML = armChartHtml;
+  }
+
+  // ═══════════════════════════════════════════════════
+  // Report
+  // ═══════════════════════════════════════════════════
+  function renderReport(res, a, b, c, d) {
+    document.getElementById('report-empty').style.display = 'none';
+    document.getElementById('report-content').style.display = 'block';
+
+    // Methods text
+    const methods = document.getElementById('methodsText');
+    methods.innerHTML = '<p>The Fragility Index (FI) was calculated following the method described by Walsh et al. (2014). ' +
+      'Starting from the observed 2x2 contingency table, events were iteratively added to the arm with fewer events ' +
+      '(with a corresponding decrease in non-events) until the two-sided Fisher exact test p-value crossed the pre-specified ' +
+      'alpha threshold (' + escapeHtml(String(res.alpha)) + '). The number of such modifications constitutes the Fragility Index. ' +
+      'The Fragility Quotient (FQ) was calculated as FI divided by the total sample size.</p>' +
+      '<p style="margin-top:var(--space-3);">For trials with a non-significant primary result, ' +
+      'the Reverse Fragility Index was computed analogously: events were added to create a significant difference.</p>' +
+      '<p style="margin-top:var(--space-3);font-size:0.85rem;color:var(--color-text-secondary);">' +
+      '<strong>Reference:</strong> Walsh M, Srinathan SK, McAuley DF, et al. The statistical significance of randomized controlled trial results is frequently fragile: a case for a Fragility Index. <em>J Clin Epidemiol</em>. 2014;67(6):622-628. doi:10.1016/j.jclinepi.2013.10.019</p>';
+
+    // R code
+    const rCode = document.getElementById('rCodeContent');
+    rCode.textContent = '# Fragility Index Calculation in R\n' +
+      '# Data: Treatment (' + a + '/' + (a + b) + '), Control (' + c + '/' + (c + d) + ')\n\n' +
+      'fragility_index <- function(a, b, c, d, alpha = 0.05) {\n' +
+      '  fi <- 0\n' +
+      '  p_orig <- fisher.test(matrix(c(a, c, b, d), nrow = 2))$p.value\n' +
+      '  if (p_orig >= alpha) {\n' +
+      '    message("Trial is not significant at alpha = ", alpha)\n' +
+      '    return(list(fi = NA, p_original = p_orig, reverse = TRUE))\n' +
+      '  }\n' +
+      '  while (fisher.test(matrix(c(a, c, b, d), nrow = 2))$p.value < alpha) {\n' +
+      '    if (a <= c) { a <- a + 1; b <- b - 1 }\n' +
+      '    else { c <- c + 1; d <- d - 1 }\n' +
+      '    fi <- fi + 1\n' +
+      '    if (b < 0 || d < 0) break\n' +
+      '  }\n' +
+      '  p_final <- fisher.test(matrix(c(a, c, b, d), nrow = 2))$p.value\n' +
+      '  total_n <- a + b + c + d\n' +
+      '  list(fi = fi, fq = fi / total_n, p_original = p_orig, p_final = p_final)\n' +
+      '}\n\n' +
+      '# Run\n' +
+      'result <- fragility_index(' + a + ', ' + b + ', ' + c + ', ' + d + ')\n' +
+      'cat(sprintf("FI = %d, FQ = %.4f\\n", result$fi, result$fq))\n' +
+      'cat(sprintf("p original = %.6f, p final = %.6f\\n", result$p_original, result$p_final))';
+  }
+
+  // ═══════════════════════════════════════════════════
+  // Export
+  // ═══════════════════════════════════════════════════
+  function exportCSV() {
+    if (!lastResult) { toast('No results to export.', 'error'); return; }
+    const r = lastResult;
+    const rows = [
+      ['Metric', 'Value'],
+      ['Fragility Index', csvSafe(r.fi !== null ? r.fi : 'N/A')],
+      ['Fragility Quotient', csvSafe(r.fq !== null ? fmt(r.fq, 4) : 'N/A')],
+      ['FQ Percent', csvSafe(r.fq !== null ? fmt(r.fq * 100, 2) : 'N/A')],
+      ['Fisher p (original)', csvSafe(fmt(r.pOriginal))],
+      ['Fisher p (final)', csvSafe(fmt(r.pFinal))],
+      ['Total N', csvSafe(r.totalN)],
+      ['Alpha', csvSafe(r.alpha)],
+      ['Type', csvSafe(r.reverse ? 'Reverse' : 'Forward')],
+      ['Trt Events', csvSafe(r.input.a)],
+      ['Trt Non-Events', csvSafe(r.input.b)],
+      ['Ctrl Events', csvSafe(r.input.c)],
+      ['Ctrl Non-Events', csvSafe(r.input.d)]
+    ];
+    const csv = rows.map(function(row) { return row.join(','); }).join('\n');
+    downloadBlob(csv, 'fragility-index-results.csv', 'text/csv');
+    toast('CSV exported', 'success');
+  }
+
+  function exportJSON() {
+    if (!lastResult) { toast('No results to export.', 'error'); return; }
+    const json = JSON.stringify(lastResult, null, 2);
+    downloadBlob(json, 'fragility-index-results.json', 'application/json');
+    toast('JSON exported', 'success');
+  }
+
+  function downloadBlob(content, filename, type) {
+    const blob = new Blob([content], { type: type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function copyCode(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const text = el.textContent;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function() { toast('Copied to clipboard', 'success'); });
+    } else {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      toast('Copied to clipboard', 'success');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════
+  // LocalStorage
+  // ═══════════════════════════════════════════════════
+  function saveToStorage(result) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+    } catch (e) { /* quota exceeded — ignore */ }
+  }
+
+  function loadFromStorage() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEY);
+      if (data) {
+        lastResult = JSON.parse(data);
+        if (lastResult && lastResult.input) {
+          setInputs(lastResult.input.a, lastResult.input.b, lastResult.input.c, lastResult.input.d);
+          renderResults(lastResult);
+          renderSensitivity(lastResult.input.a, lastResult.input.b, lastResult.input.c, lastResult.input.d);
+          renderReport(lastResult, lastResult.input.a, lastResult.input.b, lastResult.input.c, lastResult.input.d);
+        }
+      }
+    } catch (e) { /* corrupt data — ignore */ }
+  }
+
+  // ═══════════════════════════════════════════════════
+  // Theme
+  // ═══════════════════════════════════════════════════
+  function initTheme() {
+    const saved = localStorage.getItem('fragilityindex-theme');
+    if (saved === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.getElementById('themeToggle').textContent = 'Light Mode';
+    }
+    document.getElementById('themeToggle').addEventListener('click', function() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      this.textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
+      localStorage.setItem('fragilityindex-theme', next);
+    });
+  }
+
+  // ═══════════════════════════════════════════════════
+  // Init
+  // ═══════════════════════════════════════════════════
+  function init() {
+    initTabs();
+    initTheme();
+
+    // Live-update totals
+    ['inp-a', 'inp-b', 'inp-c', 'inp-d'].forEach(function(id) {
+      document.getElementById(id).addEventListener('input', updateTotals);
+    });
+
+    // Load saved state
+    loadFromStorage();
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+
+  // ── Public API ──
+  return {
+    compute: compute,
+    clearInputs: clearInputs,
+    loadExample: loadExample,
+    fillFromEffect: fillFromEffect,
+    exportCSV: exportCSV,
+    exportJSON: exportJSON,
+    copyCode: copyCode,
+    // Expose for testing
+    _fisherExact: fisherExact,
+    _computeFI: computeFI,
+    _escapeHtml: escapeHtml,
+    _csvSafe: csvSafe
+  };
+})();
+</script>
+</body>
+</html>
