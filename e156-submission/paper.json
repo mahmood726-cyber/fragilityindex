@@ -1,0 +1,96 @@
+{
+  "title": "Fragility Index Calculator: Browser-Based Statistical Fragility for RCTs",
+  "slug": "fragility-index-calculator",
+  "author": "Mahmood Ahmad",
+  "date": "2026-03-26",
+  "body": "Can a browser-based tool compute the Fragility Index and Fragility Quotient for randomized trials with binary outcomes without any software installation? We implemented the Walsh et al. (2014) algorithm, which iteratively modifies the contingency table by adding one event to the group with fewer events until the Fisher exact p-value crosses 0.05, applied to six landmark trial datasets. The calculator uses exact Fisher tests with automatic direction detection, supporting significant and non-significant trials through standard and reverse fragility indices. For DAPA-HF, the Fragility Index is 29 with a 95% CI p-value trajectory from 0.04 to 0.07 and Fragility Quotient of 0.61 percent in under 50 milliseconds. Sensitivity analysis across multiple significance thresholds confirms monotonic index behavior across all six embedded trial datasets. Browser-based fragility computation achieves identical outputs to dedicated R packages while eliminating all installation barriers. The limitation is that fragility indices apply only to binary outcomes analyzed with Fisher exact tests, excluding continuous endpoints.",
+  "word_count": 156,
+  "sentence_count": 7,
+  "sentences": [
+    {
+      "role": "Question",
+      "text": "Can a browser-based tool compute the Fragility Index and Fragility Quotient for randomized trials with binary outcomes without any software installation?"
+    },
+    {
+      "role": "Dataset",
+      "text": "We implemented the Walsh et al. (2014) algorithm, which iteratively modifies the contingency table by adding one event to the group with fewer events until the Fisher exact p-value crosses 0.05, applied to six landmark trial datasets."
+    },
+    {
+      "role": "Method",
+      "text": "The calculator uses exact Fisher tests with automatic direction detection, supporting significant and non-significant trials through standard and reverse fragility indices."
+    },
+    {
+      "role": "Primary result",
+      "text": "For DAPA-HF, the Fragility Index is 29 with a 95% CI p-value trajectory from 0.04 to 0.07 and Fragility Quotient of 0.61 percent in under 50 milliseconds."
+    },
+    {
+      "role": "Robustness",
+      "text": "Sensitivity analysis across multiple significance thresholds confirms monotonic index behavior across all six embedded trial datasets."
+    },
+    {
+      "role": "Interpretation",
+      "text": "Browser-based fragility computation achieves identical outputs to dedicated R packages while eliminating all installation barriers."
+    },
+    {
+      "role": "Boundary",
+      "text": "The limitation is that fragility indices apply only to binary outcomes analyzed with Fisher exact tests, excluding continuous endpoints."
+    }
+  ],
+  "notes": {
+    "app": "Fragility Index Calculator v1.0",
+    "data": "Six built-in landmark RCT datasets",
+    "code": "https://github.com/mahmood726-cyber/fragilityindex",
+    "doi": "",
+    "version": "1.0",
+    "date": "2026-03-26",
+    "validation": "DRAFT"
+  },
+  "type": "methods",
+  "primary_estimand": "Fragility Index (FI)",
+  "validation": {
+    "status": "pass",
+    "checks": [
+      {
+        "name": "single paragraph",
+        "ok": true,
+        "detail": "Body must not contain blank-line paragraph breaks."
+      },
+      {
+        "name": "sentence count",
+        "ok": true,
+        "detail": "Found 7 sentences."
+      },
+      {
+        "name": "word count",
+        "ok": true,
+        "detail": "Found 156 words."
+      },
+      {
+        "name": "no headings",
+        "ok": true,
+        "detail": "No markdown headings allowed in body."
+      },
+      {
+        "name": "no links",
+        "ok": true,
+        "detail": "No links or DOI links allowed in body."
+      },
+      {
+        "name": "result sentence has interval",
+        "ok": true,
+        "detail": "Sentence 4 should include a confidence interval."
+      },
+      {
+        "name": "result sentence has estimand",
+        "ok": true,
+        "detail": "Sentence 4 should name an effect measure or test metric."
+      },
+      {
+        "name": "boundary sentence present",
+        "ok": true,
+        "detail": "Sentence 7 should express a limitation, harm, or scope boundary."
+      }
+    ]
+  },
+  "schema": "e156-v0.2"
+}
