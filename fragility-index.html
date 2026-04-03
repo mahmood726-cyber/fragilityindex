@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data: blob:; font-src 'self';">
 <title>Fragility Index Calculator</title>
 <meta name="description" content="Compute the Fragility Index (FI) and Fragility Quotient (FQ) for RCTs with binary outcomes per Walsh et al. (2014).">
 <meta name="author" content="Mahmood Ahmad, Royal Free Hospital, London, UK">
@@ -358,6 +359,7 @@ scrollbar-color: var(--color-border-strong) var(--surface-bg);
 </style>
 </head>
 <body>
+<a href="#panel-input" style="position:absolute;left:-9999px;font-size:1rem;padding:8px 16px;text-decoration:none" onfocus="this.style.cssText='position:fixed;top:0;left:0;z-index:9999;padding:8px 16px;background:var(--color-primary-600);color:#fff;font-size:1rem;text-decoration:none;border-radius:4px'" onblur="this.style.cssText='position:absolute;left:-9999px'">Skip to content</a>
 
 <!-- ══════════════════ HEADER ══════════════════ -->
 <header class="app-header">
