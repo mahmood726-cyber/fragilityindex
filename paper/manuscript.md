@@ -35,5 +35,5 @@ All results matched R `fragility_index` package exactly. Computation time was <5
 The browser tool demonstrates that many landmark trials have low fragility quotients — changing <1% of outcomes reverses the conclusion. This complements other robustness measures (prediction intervals, multiverse analysis) and should be routinely reported alongside p-values.
 
 ## References
-1. Walsh M, et al. The statistical significance of randomized controlled trial results is frequently fragile. *J Clin Epidemiol*. 2014;67:622-628.
-2. Ridgeon EE, et al. The Fragility Index in multicenter randomized controlled critical care trials. *Crit Care Med*. 2016;44:1278-1284.
+1. Walsh M, et al. The statistical significance of randomized controlled trial results is frequently fragile. *J Clin Epidemiol*. 2014;67(6):622-628. doi:10.1016/j.jclinepi.2013.10.019. PMID:24508144.
+2. Ridgeon EE, et al. The Fragility Index in multicenter randomized controlled critical care trials. *Crit Care Med*. 2016;44(7):1278-1284. doi:10.1097/CCM.0000000000001670. PMID:26963326.
